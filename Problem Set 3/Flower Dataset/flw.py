@@ -28,7 +28,7 @@ class Unit(nn.Module):
         return output
 
 class SimpleNet(nn.Module):
-    def __init__(self,num_classes=10):
+    def __init__(self,num_classes=5):
         super(SimpleNet,self).__init__()
 
         #Create 14 layers of the unit with max pooling in between
@@ -127,7 +127,7 @@ test_loader = DataLoader(test_set,batch_size=32,shuffle=True,num_workers=4)
 cuda_avail = torch.cuda.is_available()
 
 #Create model, optimizer and loss function
-model = SimpleNet(num_classes=10)
+model = SimpleNet(num_classes=5)
 
 if cuda_avail:
     model.cuda()
@@ -226,7 +226,7 @@ def train(num_epochs):
 
 
 if __name__ == "__main__":
-    train(200)
+    train(50)
 
 
 
