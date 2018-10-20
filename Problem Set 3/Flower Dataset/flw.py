@@ -1,7 +1,6 @@
 #Import needed packages
 import torch
 import torch.nn as nn
-from torchvision.datasets import CIFAR10
 from torchvision.transforms import transforms
 from torch.utils.data import DataLoader
 from torch.optim import Adam
