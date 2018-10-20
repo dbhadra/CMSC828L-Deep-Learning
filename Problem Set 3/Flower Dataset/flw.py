@@ -7,6 +7,9 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.autograd import Variable
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import torch.utils.data as utils
 
 
 class Unit(nn.Module):
@@ -80,11 +83,32 @@ train_transformations = transforms.Compose([
 batch_size = 32
 
 #Load the training set
-train_set = CIFAR10(root="./data",train=True,transform=train_transformations,download=True)
+flower_imgs = np.squeeze(np.load('flower_imgs.npy'))
+flower_labels = np.squeeze(np.load('flower_labels.npy'))
 
-#Create a loder for the training set
-train_loader = DataLoader(train_set,batch_size=batch_size,shuffle=True,num_workers=4)
+X,y = flower_imgs,flower_labels
 
+# Splitting Dataset
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size = 0.15, random_state = 0)
+
+class_names = ['daisy', 'dandelion', 'rose', 'sunflower', 
+               'tulip']
+
+# Preprocess the data : Scale these values to a range of 0 to 1
+x_train = x_train.reshape(x_train.shape[0], 32,32, 3)
+x_test = x_test.reshape(x_test.shape[0], 32, 32, 3)
+input_shape = (32, 32, 3)
+# Making sure that the values are float so that we can get decimal points after division
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+# Normalizing the RGB codes by dividing it to the max RGB value.
+x_train /= 255
+x_test /= 255
+#Create a loader for the training set
+tensor_x = torch.tensor(x_train)
+tensor_y = torch.tensor(y_train)
+train_set = utils.TensorDataset(tensor_x,tensor_y)
+train_loader = DataLoader(train_set,batch_size=32,shuffle=True,num_workers=4)
 
 #Define transformations for the test set
 test_transformations = transforms.Compose([
@@ -94,10 +118,11 @@ test_transformations = transforms.Compose([
 ])
 
 #Load the test set, note that train is set to False
-test_set = CIFAR10(root="./data",train=False,transform=test_transformations,download=True)
+tensor_x = torch.tensor(x_test)
+tensor_y = torch.tensor(y_test)
+test_set = utils.TensorDataset(tensor_x,tensor_y)
+test_loader = DataLoader(test_set,batch_size=32,shuffle=True,num_workers=4)
 
-#Create a loder for the test set, note that both shuffle is set to false for the test loader
-test_loader = DataLoader(test_set,batch_size=batch_size,shuffle=False,num_workers=4)
 
 #Check if gpu support is available
 cuda_avail = torch.cuda.is_available()
@@ -133,11 +158,6 @@ def adjust_learning_rate(epoch):
         param_group["lr"] = lr
 
 
-
-
-def save_models(epoch):
-    torch.save(model.state_dict(), "cifar10model_{}.model".format(epoch))
-    print("Checkpoint saved")
 
 def test():
     model.eval()
@@ -200,11 +220,6 @@ def train(num_epochs):
 
         #Evaluate on the test set
         test_acc = test()
-
-        # Save the model if the test acc is greater than our current best
-        if test_acc > best_acc:
-            save_models(epoch)
-            best_acc = test_acc
 
 
         # Print the metrics
